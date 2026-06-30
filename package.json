@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "ts-node src/server.ts",
+    "dev": "ts-node --files src/server.ts",
     "prisma:test": "ts-node src/testPrisma.ts",
     "build": "tsc",
     "start": "node dist/server.js"

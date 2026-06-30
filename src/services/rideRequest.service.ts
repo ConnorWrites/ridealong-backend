@@ -34,7 +34,11 @@ export async function requestRide(userId: string, rideId: string) {
 export async function acceptRideRequest(requestId: string, driverId: string) {
   const request = await prisma.rideRequest.findUnique({
     where: { id: requestId },
-    include: { ride: { include: { requests: true },},},
+    include: {
+      ride: {
+        include: { requests: true },
+      },
+    },
   });
 
   if (!request) {
@@ -49,15 +53,25 @@ export async function acceptRideRequest(requestId: string, driverId: string) {
     throw new Error("Request already handled");
   }
 
-  return prisma.$transaction([ prisma.rideRequest.update({
+  const [accepted, autoRejected] = await prisma.$transaction([
+    prisma.rideRequest.update({
       where: { id: requestId },
       data: { status: "ACCEPTED" },
     }),
     prisma.rideRequest.updateMany({
-      where: { rideId: request.rideId, id: { not: requestId }, status: "PENDING" },
+      where: {
+        rideId: request.rideId,
+        id: { not: requestId },
+        status: "PENDING",
+      },
       data: { status: "REJECTED" },
     }),
   ]);
+
+  return {
+    accepted,
+    autoRejectedCount: autoRejected.count,
+  };
 }
 
 export async function rejectRideRequest(requestId: string, driverId: string) {
