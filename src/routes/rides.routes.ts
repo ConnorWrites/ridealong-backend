@@ -1,0 +1,56 @@
+import { Router } from "express";
+import { requireUser, requireRole } from "../middleware/auth";
+import { createRide, listRides, getRideById, listMyRides } from "../services/ride.service";
+
+const router = Router();
+
+function asString(value: string | string[]): string {
+  return Array.isArray(value) ? value[0] : value;
+}
+// List available upcoming rides, 
+// Filtered by origin/destination
+router.get("/", requireUser, async (req, res) => {
+  try {
+    const { origin, destination } = req.query;
+    const rides = await listRides({ 
+      origin: typeof origin === "string" ? origin : undefined, 
+      destination: typeof destination === "string" ? destination : undefined,
+    });
+    res.json(rides);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Rides the current user is driving
+router.get("/mine", requireUser, async (req, res) => {
+  try {
+    const rides = await listMyRides(req.user!.id);
+    res.json(rides);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.get("/:rideId", requireUser, async (req, res) => {
+  try {
+    const rideId = asString(req.params.rideId);
+    const ride = await getRideById(rideId);
+    res.json(ride);
+  } catch (err: any) {
+    res.status(404).json({ error: err.message });
+  }
+});
+
+// Only drivers can post a ride
+router.post("/", requireUser, requireRole("DRIVER"), async (req, res) => {
+  try {
+    const { origin, destination, departureTime } = req.body;
+    const ride = await createRide(req.user!.id, origin, destination, new Date(departureTime));
+    res.status(201).json(ride);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+export default router;
