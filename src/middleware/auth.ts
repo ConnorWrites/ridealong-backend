@@ -2,24 +2,21 @@ import { Request, Response, NextFunction } from "express";
 import { verifyToken } from "../lib/jwt";
 
 export function requireUser(req: Request, res: Response, next: NextFunction) {
-  const header = req.header("authorization");
+  const token = req.cookies?.token;
 
-  if (!header || !header.startsWith("Bearer ")) {
-    return res.status(401).json({ error: "Missing or malformed Authorization header" });
+  if (!token) {
+    return res.status(401).json({ error: "Not authenticated" });
   }
-
-  const token = header.slice("Bearer ".length).trim();
 
   try {
     const payload = verifyToken(token);
     req.user = { id: payload.id, role: payload.role };
     next();
-  } catch (err) {
-    return res.status(401).json({ error: "Invalid or expired token" });
+  } catch {
+    return res.status(401).json({ error: "Invalid or expired session" });
   }
 }
 
-// To restrict a route to specific roles, e.g. requireRole("DRIVER")
 export function requireRole(...roles: string[]) {
   return (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) {
