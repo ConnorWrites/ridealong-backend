@@ -45,8 +45,11 @@ router.get("/:rideId", requireUser, async (req, res) => {
 // Only drivers can post a ride
 router.post("/", requireUser, requireRole("DRIVER"), async (req, res) => {
   try {
-    const { origin, destination, departureTime } = req.body;
-    const ride = await createRide(req.user!.id, origin, destination, new Date(departureTime));
+    const { origin, destination, departureTime, availableSeats } = req.body;
+if(typeof availableSeats !== "number" || availableSeats < 1 || availableSeats > 10) {
+  return res.status(400).json({ error: "Available seats must be a number between 1 and 10" });
+}
+    const ride = await createRide(req.user!.id, origin, destination, new Date(departureTime), availableSeats);
     res.status(201).json(ride);
   } catch (err: any) {
     res.status(400).json({ error: err.message });

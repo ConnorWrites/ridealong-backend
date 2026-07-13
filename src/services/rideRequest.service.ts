@@ -1,6 +1,6 @@
 import { prisma } from "../lib/prisma";
 
-export async function requestRide(userId: string, rideId: string) {
+export async function requestRide(userId: string, rideId: string, seatsRequested: number) {
   const ride = await prisma.ride.findUnique({
     where: { id: rideId },
     include: { requests: true },
@@ -14,20 +14,24 @@ export async function requestRide(userId: string, rideId: string) {
     throw new Error("Driver cannot request own ride");
   }
 
+  if (seatsRequested < 1) {
+    throw new Error(`Must request at least one seat`);
+  }
+
+  const seatsRemaining = ride.availableSeats - ride.bookedSeats;
+
+  if (seatsRequested > seatsRemaining) {
+    throw new Error(`Not enough seats available. Only ${seatsRemaining} left.`);
+  }
+
   const existingRequest = ride.requests.find((r) => r.userId === userId);
 
   if (existingRequest) {
     throw new Error("Ride already requested by this user");
   }
 
-  const acceptedRequest = ride.requests.find((r) => r.status === "ACCEPTED");
-
-  if (acceptedRequest) {
-    throw new Error("Ride already has an accepted passenger");
-  }
-
   return prisma.rideRequest.create({
-    data: { userId, rideId },
+    data: { userId, rideId, seatsRequested },
   });
 }
 
@@ -53,25 +57,62 @@ export async function acceptRideRequest(requestId: string, driverId: string) {
     throw new Error("Request already handled");
   }
 
-  const [accepted, autoRejected] = await prisma.$transaction([
-    prisma.rideRequest.update({
-      where: { id: requestId },
-      data: { status: "ACCEPTED" },
-    }),
-    prisma.rideRequest.updateMany({
+const result = await prisma.$transaction(async (tx) => {
+  const ride = await tx.ride.findUnique({
+    where: { id: request.rideId },
+  });
+
+  if (!ride) {
+    throw new Error("Ride not found");
+  }
+
+  const seatsRemaining = ride.availableSeats - ride.bookedSeats;
+
+  if (request.seatsRequested > seatsRemaining) {
+    throw new Error(
+      `Only ${seatsRemaining} seat(s) remaining for this ride.`
+    );
+  }
+
+  const accepted = await tx.rideRequest.update({
+    where: { id: requestId },
+    data: {
+      status: "ACCEPTED",
+    },
+  });
+
+  const updatedRide = await tx.ride.update({
+    where: { id: ride.id },
+    data: {
+      bookedSeats: {
+        increment: request.seatsRequested,
+      },
+    },
+  });
+
+  let autoRejectedCount = 0;
+
+  if (updatedRide.bookedSeats >= updatedRide.availableSeats) {
+    const rejected = await tx.rideRequest.updateMany({
       where: {
-        rideId: request.rideId,
-        id: { not: requestId },
+        rideId: ride.id,
         status: "PENDING",
       },
-      data: { status: "REJECTED" },
-    }),
-  ]);
+      data: {
+        status: "REJECTED",
+      },
+    });
+
+    autoRejectedCount = rejected.count;
+  }
 
   return {
     accepted,
-    autoRejectedCount: autoRejected.count,
+    autoRejectedCount,
   };
+});
+
+return result;
 }
 
 export async function rejectRideRequest(requestId: string, driverId: string) {

@@ -1,6 +1,6 @@
 import { prisma } from "../lib/prisma";
 
-export async function createRide( driverId: string, origin: string, destination: string, departureTime: Date) {
+export async function createRide( driverId: string, origin: string, destination: string, departureTime: Date, availableSeats: number) {
   if (!origin || !destination) {
     throw new Error("origin and destination are required");
   }
@@ -10,12 +10,16 @@ export async function createRide( driverId: string, origin: string, destination:
   if (departureTime.getTime() < Date.now()) {
     throw new Error("departureTime must be in the future");
   }
-
+  if (typeof availableSeats !== "number" || availableSeats < 1 || availableSeats > 10) {
+    throw new Error("Available seats must be a number between 1 and 10");
+  }
   return prisma.ride.create({
     data: {
       origin,
       destination,
       departureTime,
+      availableSeats,
+      bookedSeats: 0,
       driverId,
     },
   });

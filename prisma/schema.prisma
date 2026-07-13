@@ -42,6 +42,9 @@ model Ride {
   destination   String
   departureTime DateTime
 
+  availableSeats Int @default(4)
+  bookedSeats Int @default(0)
+
   driverId String
   driver   User   @relation("DriverRides", fields: [driverId], references: [id], onDelete: Restrict)
 
@@ -53,9 +56,10 @@ model Ride {
 }
 
 model RideRequest {
-  id        String        @id @default(uuid())
-  status    RequestStatus @default(PENDING)
-  createdAt DateTime      @default(now())
+  id              String        @id @default(uuid())
+  status          RequestStatus @default(PENDING)
+  seatsRequested  Int           @default(1)
+  createdAt       DateTime      @default(now())
 
   userId String
   rideId String
