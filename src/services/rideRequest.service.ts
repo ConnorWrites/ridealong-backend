@@ -14,8 +14,8 @@ export async function requestRide(userId: string, rideId: string, seatsRequested
     throw new Error("Driver cannot request own ride");
   }
 
-  if (seatsRequested < 1) {
-    throw new Error(`Must request at least one seat`);
+  if (!Number.isInteger(seatsRequested) || seatsRequested > ride.availableSeats || seatsRequested < 1) {
+    throw new Error(`Seats requested must be between 1 and ${ride.availableSeats}`);
   }
 
   const seatsRemaining = ride.availableSeats - ride.bookedSeats;
