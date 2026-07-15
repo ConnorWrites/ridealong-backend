@@ -1,14 +1,13 @@
 import { Router } from "express";
 import { requireUser, requireRole } from "../middleware/auth";
-import { createRide, listRides, getRideById, listMyRides } from "../services/ride.service";
+import { createRide, listRides, getRideById, listMyRides, deleteRide, updateRide } from "../services/ride.service";
 
 const router = Router();
 
 function asString(value: string | string[]): string {
   return Array.isArray(value) ? value[0] : value;
 }
-// List available upcoming rides, 
-// Filtered by origin/destination
+// List available upcoming rides filtered by origin/destination
 router.get("/", requireUser, async (req, res) => {
   try {
     const { origin, destination } = req.query;
@@ -51,6 +50,32 @@ if(typeof availableSeats !== "number" || availableSeats < 1 || availableSeats > 
 }
     const ride = await createRide(req.user!.id, origin, destination, new Date(departureTime), availableSeats);
     res.status(201).json(ride);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.patch("/:rideId", requireUser, requireRole("DRIVER"), async (req, res) => {
+  try {
+    const rideId = asString(req.params.rideId);
+    const { origin, destination, departureTime, availableSeats } = req.body;
+    const ride = await updateRide(rideId, req.user!.id, {
+      origin,
+      destination,
+      departureTime: departureTime ? new Date(departureTime) : undefined,
+      availableSeats: typeof availableSeats === "number" ? availableSeats : undefined ,
+    });
+    res.json(ride);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.delete("/:rideId", requireUser, requireRole("DRIVER"), async (req, res) => {
+  try {
+    const rideId = asString(req.params.rideId);
+    await deleteRide(rideId, req.user!.id);
+    res.json({ message: "Ride deleted" });
   } catch (err: any) {
     res.status(400).json({ error: err.message });
   }

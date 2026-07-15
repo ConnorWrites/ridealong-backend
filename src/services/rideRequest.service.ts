@@ -138,3 +138,15 @@ export async function rejectRideRequest(requestId: string, driverId: string) {
     data: { status: "REJECTED" },
   });
 }
+
+export async function cancelRideRequest(requestId: string, userId: string) {
+  const request = await prisma.rideRequest.findUnique({
+    where: { id: requestId },
+  });
+
+  if (!request) throw new Error("Ride request not found");
+  if (request.userId !== userId) throw new Error("You can only cancel your own requests");
+  if (request.status !== "PENDING") throw new Error("Only pending requests can be cancelled");
+
+  return prisma.rideRequest.delete({ where: { id: requestId } });
+}
