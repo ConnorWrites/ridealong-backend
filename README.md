@@ -2,7 +2,7 @@
 
 The backend API for **RideAlong**, a full-stack ridesharing application. Handles authentication, ride management, ride requests, and routing coordination.
 
-🔗 Frontend repo: [ridealong-frontend]()
+🔗 Frontend repo: [ridealong-frontend](https://github.com/ConnorWrites/ridealong-frontend)
 
 ## Features
 
