@@ -50,7 +50,7 @@ export async function listRides(filters: { origin?: string; destination?: string
     },
     include: {
       driver: { select: { id: true, name: true, email: true } },
-      requests: { select: { id: true, status: true, userId: true, createdAt: true } },
+      requests: { select: { id: true, status: true, seatsRequested: true, userId: true, createdAt: true, rideId: true, user: { select: { id: true, name: true, email: true } } } },
     },
     orderBy: { departureTime: "asc" },
   });
@@ -61,7 +61,7 @@ export async function getRideById(rideId: string) {
     where: { id: rideId },
     include: {
       driver: { select: { id: true, name: true, email: true } },
-      requests: { select: { id: true, status: true, userId: true, createdAt: true } },
+      requests: { select: { id: true, status: true, seatsRequested: true, userId: true, createdAt: true, rideId: true, user: { select: { id: true, name: true, email: true } } } },
     },
   });
 
@@ -73,7 +73,7 @@ export async function listMyRides(userId: string) {
   return prisma.ride.findMany({
     where: { driverId: userId },
     include: {
-      requests: { select: { id: true, status: true, userId: true, createdAt: true, rideId: true } },
+      requests: { select: { id: true, status: true, seatsRequested: true, userId: true, createdAt: true, rideId: true, user: { select: { id: true, name: true, email: true } } } },
     },
     orderBy: { departureTime: "asc" },
   });

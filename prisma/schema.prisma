@@ -25,6 +25,7 @@ model User {
   password String
   name     String?
   role     UserRole @default(PASSENGER)
+  messages Message[]
 
   requests RideRequest[]
   drives   Ride[]        @relation("DriverRides")
@@ -60,6 +61,7 @@ model RideRequest {
   status          RequestStatus @default(PENDING)
   seatsRequested  Int           @default(1)
   createdAt       DateTime      @default(now())
+  messages        Message[]
 
   userId String
   rideId String
@@ -71,4 +73,20 @@ model RideRequest {
   @@index([userId])
 
   @@unique([userId, rideId])
+}
+
+model Message {
+  id            String   @id @default(uuid())
+  content       String
+  read          Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  senderId      String
+  rideRequestId String
+
+  sender      User        @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  rideRequest RideRequest @relation(fields: [rideRequestId], references: [id], onDelete: Cascade)
+
+  @@index([rideRequestId])
+  @@index([senderId])
 }

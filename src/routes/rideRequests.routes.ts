@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { requireUser } from "../middleware/auth";
 import { requestRide, acceptRideRequest, rejectRideRequest } from "../services/rideRequest.service";
+import { sendMessage, listMessages } from "../services/message.service";
 
 const router = Router();
 
@@ -37,6 +38,27 @@ router.post("/requests/:requestId/reject", requireUser, async (req, res) => {
     const requestId = asString(req.params.requestId);
     const result = await rejectRideRequest(requestId, req.user!.id);
     res.json(result);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.get("/requests/:requestId/messages", requireUser, async (req, res) => {
+  try {
+    const requestId = asString(req.params.requestId);
+    const messages = await listMessages(requestId, req.user!.id);
+    res.json(messages);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.post("/requests/:requestId/messages", requireUser, async (req, res) => {
+  try {
+    const requestId = asString(req.params.requestId);
+    const { content } = req.body;
+    const message = await sendMessage(requestId, req.user!.id, content);
+    res.status(201).json(message);
   } catch (err: any) {
     res.status(400).json({ error: err.message });
   }
