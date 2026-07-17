@@ -1,6 +1,6 @@
 import { prisma } from "../lib/prisma";
 
-export async function requestRide(userId: string, rideId: string, seatsRequested: number) {
+export async function requestRide(userId: string, rideId: string, seatsRequested: number, hasLuggage: boolean = false, notes?: string) {
   const ride = await prisma.ride.findUnique({
     where: { id: rideId },
     include: { requests: true },
@@ -30,8 +30,12 @@ export async function requestRide(userId: string, rideId: string, seatsRequested
     throw new Error("Ride already requested by this user");
   }
 
+  if (notes && notes.length > 500) {
+    throw new Error("Notes cannot exceed 500 characters");
+  }
+
   return prisma.rideRequest.create({
-    data: { userId, rideId, seatsRequested },
+    data: { userId, rideId, seatsRequested, hasLuggage, notes: notes?.trim() || null },
   });
 }
 

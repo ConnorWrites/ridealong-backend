@@ -13,8 +13,8 @@ function asString(value: string | string[]): string {
 router.post("/:rideId/request", requireUser, async (req, res) => {
   try {
     const rideId = asString(req.params.rideId);
-    const { seatsRequested } = req.body;
-    const request = await requestRide(req.user!.id, rideId, Number(seatsRequested));
+    const { seatsRequested, hasLuggage, notes } = req.body;
+    const request = await requestRide(req.user!.id, rideId, Number(seatsRequested), Boolean(hasLuggage), notes);
     res.status(201).json(request);
   } catch (err: any) { 
     res.status(400).json({ error: err.message });

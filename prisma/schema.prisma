@@ -60,6 +60,8 @@ model RideRequest {
   id              String        @id @default(uuid())
   status          RequestStatus @default(PENDING)
   seatsRequested  Int           @default(1)
+  hasLuggage      Boolean       @default(false)
+  notes           String?
   createdAt       DateTime      @default(now())
   messages        Message[]
 
