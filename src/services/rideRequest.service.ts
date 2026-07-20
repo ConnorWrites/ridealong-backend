@@ -150,7 +150,21 @@ export async function cancelRideRequest(requestId: string, userId: string) {
 
   if (!request) throw new Error("Ride request not found");
   if (request.userId !== userId) throw new Error("You can only cancel your own requests");
-  if (request.status !== "PENDING") throw new Error("Only pending requests can be cancelled");
+  if (request.status === "REJECTED") throw new Error("Rejected requests cannot be cancelled");
 
-  return prisma.rideRequest.delete({ where: { id: requestId } });
+  return prisma.$transaction(async (tx) => {
+    if(request.status === "ACCEPTED"){
+      await tx.ride.update({ 
+        where: { id: request.rideId },
+        data: {
+          bookedSeats: {
+            decrement: request.seatsRequested,
+          },
+        },
+       }); 
+    }
+  await tx.rideRequest.delete({ 
+    where: { id: requestId }, 
+  });
+ });
 }
