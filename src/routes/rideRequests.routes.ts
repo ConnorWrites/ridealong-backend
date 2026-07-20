@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { requireUser } from "../middleware/auth";
-import { requestRide, acceptRideRequest, rejectRideRequest } from "../services/rideRequest.service";
+import { requestRide, acceptRideRequest, rejectRideRequest, cancelRideRequest } from "../services/rideRequest.service";
 import { sendMessage, listMessages } from "../services/message.service";
 
 const router = Router();
@@ -39,6 +39,16 @@ router.post("/requests/:requestId/reject", requireUser, async (req, res) => {
     const result = await rejectRideRequest(requestId, req.user!.id);
     res.json(result);
   } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.delete("/requests/:requestId", requireUser, async (req, res) => {
+  try {
+    const requestId = asString(req.params.requestId);
+    await cancelRideRequest(requestId, req.user!.id);
+    res.json({ message: "Request cancelled" });
+  } catch (err:any) {
     res.status(400).json({ error: err.message });
   }
 });
