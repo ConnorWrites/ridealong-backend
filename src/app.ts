@@ -11,6 +11,7 @@ const app = express();
 const allowedOrigins = [
   "http://localhost:5173",
   "http://192.168.0.28:5173",
+  "https://ridealong-frontend.onrender.com",
   process.env.FRONTEND_URL,
 ].filter((origin): origin is string => Boolean(origin));
 
