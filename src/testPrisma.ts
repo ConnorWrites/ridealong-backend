@@ -1,4 +1,3 @@
-// src/testPrisma.ts
 import { prisma } from "./lib/prisma";
 import { signup } from "./services/auth.service";
 import { createRide } from "./services/ride.service";
@@ -12,10 +11,11 @@ async function main() {
     driver.id,
     "Campus",
     "City",
-    new Date(Date.now() + 60 * 60 * 1000)
+    new Date(Date.now() + 60 * 60 * 1000),
+    3
   );
 
-  const request = await requestRide(passenger.id, ride.id);
+  const request = await requestRide(passenger.id, ride.id, 1, false, "Test booking");
   console.log("Ride request created:", request);
 
   const accepted = await acceptRideRequest(request.id, driver.id);
