@@ -8,8 +8,14 @@ import rideRequestRoutes from "./routes/rideRequests.routes";
 
 const app = express();
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://192.168.0.28:5173",
+  process.env.FRONTEND_URL,
+].filter((origin): origin is string => Boolean(origin));
+
 app.use(cors({
-  origin: ["http://localhost:5173", "http://192.168.0.28:5173"], // Vite dev server
+  origin: allowedOrigins, // Vite dev server
   credentials: true,               // Required to send/receive cookies cross-origin
 }));
 app.use(express.json());
